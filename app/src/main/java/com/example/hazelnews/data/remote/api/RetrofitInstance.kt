@@ -1,4 +1,4 @@
-package com.example.hazelnews.api
+package com.example.hazelnews.data.remote.api
 
 import com.example.hazelnews.util.Constants.Companion.BASE_URL
 import okhttp3.OkHttpClient

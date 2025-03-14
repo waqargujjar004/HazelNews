@@ -1,4 +1,4 @@
-package com.example.hazelnews.models
+package com.example.hazelnews.domain.models
 
 data class NewsResponse(
     val articles: MutableList<Article>,

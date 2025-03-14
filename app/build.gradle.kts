@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("androidx.navigation.safeargs.kotlin") // Safe Args Plugin (YouTube setup)
+    id("kotlin-parcelize")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -73,4 +75,10 @@ dependencies {
     // Glide
     implementation ("com.github.bumptech.glide:glide:4.12.0")
     ksp ("com.github.bumptech.glide:compiler:4.12.0")
+
+    //Hilt
+    implementation ("com.google.dagger:hilt-android:2.50")
+    ksp ("com.google.dagger:hilt-compiler:2.50")
+
+
 }

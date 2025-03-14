@@ -1,7 +1,7 @@
-package com.example.hazelnews.db
+package com.example.hazelnews.data.local.db
 
 import androidx.room.TypeConverter
-import com.example.hazelnews.models.Source
+import com.example.hazelnews.domain.models.Source
 
 class Converters {
 

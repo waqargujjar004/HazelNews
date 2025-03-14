@@ -1,4 +1,6 @@
-package com.example.hazelnews.models
+package com.example.hazelnews.domain.models
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -10,7 +10,7 @@
         android:label="ArticleFragment" >
         <argument
             android:name="article"
-            app:argType="com.example.hazelnews.models.Article" />
+            app:argType="com.example.hazelnews.domain.models.Article" />
     </fragment>
     <fragment
         android:id="@+id/favouritesFragment2"

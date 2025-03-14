@@ -1,6 +1,6 @@
-package com.example.hazelnews.api
+package com.example.hazelnews.data.remote.api
 
-import com.example.hazelnews.models.NewsResponse
+import com.example.hazelnews.domain.models.NewsResponse
 import com.example.hazelnews.util.Constants.Companion.API_KEY
 import retrofit2.Response
 import retrofit2.http.GET
