@@ -1,13 +1,15 @@
 
-package com.example.hazelnews.ui
+package com.example.hazelnews.presentation.ui
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.hazelnews.R
 import com.example.hazelnews.databinding.ActivityNewsBinding
+import com.example.hazelnews.presentation.viewmodel.NewsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -26,6 +28,15 @@ class NewsActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.newsNavHostFragment) as NavHostFragment
         val navController = navHostFragment.navController
         binding.bottomNavigationView.setupWithNavController(navController)
+
+        // Hide bottom navigation when ArticleFragment is opened
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == R.id.articleFragment) {
+                binding.bottomNavigationView.visibility = View.GONE
+            } else {
+                binding.bottomNavigationView.visibility = View.VISIBLE
+            }
+        }
     }
 }
 

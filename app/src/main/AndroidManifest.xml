@@ -13,9 +13,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HazelNews"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
         <activity
-            android:name=".ui.NewsActivity"
+            android:name=".presentation.ui.NewsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

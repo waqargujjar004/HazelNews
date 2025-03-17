@@ -1,4 +1,4 @@
-package com.example.hazelnews.ui.fragments
+package com.example.hazelnews.presentation.ui.fragments
 
 import android.os.Bundle
 import android.util.Log
@@ -11,12 +11,12 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hazelnews.R
-import com.example.hazelnews.adapters.NewsAdapter
+import com.example.hazelnews.presentation.adapters.NewsAdapter
 import com.example.hazelnews.databinding.FragmentFavouritesBinding
 import com.example.hazelnews.domain.models.Article
-import com.example.hazelnews.ui.NewsViewModel
-import com.example.hazelnews.ui.events.NewsEvent
-import com.example.hazelnews.ui.state.NewsState
+import com.example.hazelnews.presentation.viewmodel.NewsViewModel
+import com.example.hazelnews.presentation.events.NewsEvent
+import com.example.hazelnews.presentation.state.NewsState
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

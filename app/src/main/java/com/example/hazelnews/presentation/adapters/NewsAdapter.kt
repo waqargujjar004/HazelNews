@@ -1,4 +1,4 @@
-package com.example.hazelnews.adapters
+package com.example.hazelnews.presentation.adapters
 
 import android.view.LayoutInflater
 import android.view.View
@@ -58,7 +58,7 @@ class NewsAdapter : RecyclerView.Adapter<NewsAdapter.ArticleViewHolder>(){
         articleDateTime = holder.itemView.findViewById(R.id.articleDateTime)
 
         holder.itemView.apply {
-            Glide.with(this).load(article.urlToImage).into(articleImage)
+            Glide.with(this).load(article.urlToImage).error(R.drawable.default_image).into(articleImage)
 
             articleSource.text = article.source?.name
             articleTitle.text = article.title

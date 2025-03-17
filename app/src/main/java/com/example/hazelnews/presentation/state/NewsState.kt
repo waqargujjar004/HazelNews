@@ -1,4 +1,4 @@
-package com.example.hazelnews.ui.state
+package com.example.hazelnews.presentation.state
 
 import com.example.hazelnews.domain.models.Article
 

@@ -4,6 +4,8 @@ import com.example.hazelnews.data.local.datasources.LocalDataSource
 import com.example.hazelnews.data.remote.datasource.RemoteDataSource
 import com.example.hazelnews.domain.models.Article
 import com.example.hazelnews.domain.repository.NewsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class NewsRepositoryImpl @Inject constructor(
@@ -12,22 +14,32 @@ class NewsRepositoryImpl @Inject constructor(
 ) : NewsRepository {
 
     override suspend fun getHeadlines(countryCode: String, pageNumber: Int) =
-        remoteDataSource.getHeadlines(countryCode, pageNumber)
+        withContext(Dispatchers.IO) {
+            remoteDataSource.getHeadlines(countryCode, pageNumber)
+        }
 
     override suspend fun searchNews(searchQuery: String, pageNumber: Int) =
-        remoteDataSource.searchNews(searchQuery, pageNumber)
+        withContext(Dispatchers.IO) {
+            remoteDataSource.searchNews(searchQuery, pageNumber)
+        }
 
     override suspend fun upsert(article: Article) =
-        localDataSource.saveArticle(article)
+        withContext(Dispatchers.IO) {
+            localDataSource.saveArticle(article)
+        }
 
     override fun getFavouriteNews() =
         localDataSource.getSavedArticles()
 
     override suspend fun deleteArticle(article: Article) =
-        localDataSource.deleteArticle(article)
+        withContext(Dispatchers.IO) {
+            localDataSource.deleteArticle(article)
+        }
 
     override suspend fun isArticleExists(url: String): Boolean =
-        localDataSource.isArticleExists(url)
+        withContext(Dispatchers.IO) {
+            localDataSource.isArticleExists(url)
+        }
 }
 
 

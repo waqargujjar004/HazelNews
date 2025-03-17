@@ -1,6 +1,6 @@
 
-package com.example.hazelnews.ui.fragments
-
+package com.example.hazelnews.presentation.ui.fragments
+import android.view.inputmethod.InputMethodManager
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
@@ -8,7 +8,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -18,11 +17,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hazelnews.R
-import com.example.hazelnews.adapters.NewsAdapter
+import com.example.hazelnews.presentation.adapters.NewsAdapter
 import com.example.hazelnews.databinding.FragmentSearchBinding
-import com.example.hazelnews.ui.NewsViewModel
-import com.example.hazelnews.ui.events.NewsEvent
-import com.example.hazelnews.ui.state.NewsState
+import com.example.hazelnews.presentation.viewmodel.NewsViewModel
+import com.example.hazelnews.presentation.events.NewsEvent
+import com.example.hazelnews.presentation.state.NewsState
 import com.example.hazelnews.util.Constants
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
@@ -85,26 +84,49 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 }
             }
         })
-
-        // 🔥 Perform search immediately when Enter key is pressed
         binding.searchEdit.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 val query = binding.searchEdit.text.toString().trim()
                 if (query.isNotEmpty()) {
                     Log.d("SearchFragment", "Enter Key Pressed: Searching -> $query") // Debugging
-                    searchJob?.cancel() // Cancel delayed search
-                    newsViewModel.onEvent(NewsEvent.SearchNews(query)) // 🔥 Instant search
 
-                    // 🔹 Hide the keyboard after searching
-//                    binding.searchEdit.clearFocus()
-//                    val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-//                    imm.hideSoftInputFromWindow(binding.searchEdit.windowToken, 0)
+                    searchJob?.cancel() // Ensure previous job is canceled
+                    searchJob = viewLifecycleOwner.lifecycleScope.launch {
+                        delay(200) // Optional: Small delay to prevent accidental multiple calls
+                        newsViewModel.onEvent(NewsEvent.SearchNews(query)) // 🔥 Perform search
+                    }
+
+                    // Hide keyboard after searching
+                    binding.searchEdit.clearFocus()
+                    val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(binding.searchEdit.windowToken, 0)
                 }
                 true // Consume event
             } else {
                 false // Default behavior
             }
         }
+
+
+        // 🔥 Perform search immediately when Enter key is pressed
+//        binding.searchEdit.setOnEditorActionListener { _, actionId, _ ->
+//            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+//                val query = binding.searchEdit.text.toString().trim()
+//                if (query.isNotEmpty()) {
+//                    Log.d("SearchFragment", "Enter Key Pressed: Searching -> $query") // Debugging
+//                    searchJob?.cancel() // Cancel delayed search
+//                    newsViewModel.onEvent(NewsEvent.SearchNews(query)) // 🔥 Instant search
+//
+//                    // 🔹 Hide the keyboard after searching
+////                    binding.searchEdit.clearFocus()
+////                    val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+////                    imm.hideSoftInputFromWindow(binding.searchEdit.windowToken, 0)
+//                }
+//                true // Consume event
+//            } else {
+//                false // Default behavior
+//            }
+//        }
     }
 
 

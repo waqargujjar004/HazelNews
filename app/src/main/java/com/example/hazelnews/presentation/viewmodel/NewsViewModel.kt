@@ -1,24 +1,23 @@
-package com.example.hazelnews.ui
+package com.example.hazelnews.presentation.viewmodel
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.util.Log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hazelnews.domain.models.Article
-import com.example.hazelnews.domain.models.NewsResponse
 import com.example.hazelnews.domain.usecases.*
 //import com.example.hazelnews.domain.util.Resource
 import com.example.hazelnews.util.Resource
-import com.example.hazelnews.util.Constants
-import com.example.hazelnews.ui.events.NewsEvent
-import com.example.hazelnews.ui.state.NewsState
+import com.example.hazelnews.presentation.events.NewsEvent
+import com.example.hazelnews.presentation.state.NewsState
+import com.example.hazelnews.util.NetworkHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,6 +29,7 @@ class NewsViewModel @Inject constructor(
     private val deleteArticleUseCase: DeleteArticleUseCase,
     // private val getSavedArticlesUseCase: GetSavedArticlesUseCase,
     private val isArticleExistsUseCase: IsArticleExistsUseCase,
+    private val networkHelper: NetworkHelper,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -63,97 +63,102 @@ class NewsViewModel @Inject constructor(
     }
 
 
-
     private fun loadMoreSearchResults() {
-        if (_state.value is NewsState.Loading) return // Prevent multiple API calls
+        if (_state.value is NewsState.Loading) return  // Prevent multiple API calls
 
-        viewModelScope.launch {
-            _state.value = NewsState.Loading
+        viewModelScope.launch(Dispatchers.IO) { // 🔥 Fetch more results in IO thread
             try {
-                if (internetConnection()) {
-                    val nextPage = searchNewsPage + 1  // Increment page number
-                    val result = searchNewsUseCase(newSearchQuery ?: "", nextPage)
-
-                    if (result is Resource.Success) {
-                        val articles = result.data?.articles ?: emptyList()
-                        apiTotalResults = result.data?.totalResults ?: 0
-
-                        // Append new articles to existing search results
-                        searchNewsResponse.addAll(articles)
-                        searchNewsPage = nextPage  // Update page number
-
-                        _state.value = NewsState.Success(
-                            articles = searchNewsResponse,
-                            totalResults = apiTotalResults,
-                            isLastPage = (searchNewsPage * 20) >= apiTotalResults,
-                            isSearch = true
-                        )
-                    } else {
-                        _state.value = NewsState.Error(result.message ?: "Unknown error")
+                if (networkHelper.hasInternetConnection()) {
+                    searchNewsUseCase(newSearchQuery ?: "").collect { result ->
+                        withContext(Dispatchers.Main) { // 🔥 Ensure UI updates run on the Main thread
+                            if (result is Resource.Success) {
+                                searchNewsPage++
+                                _state.value = NewsState.SearchResults(
+                                    articles = result.data ?: emptyList(),
+                                    isLastPage = result.isLastPage
+                                )
+                            } else {
+                                _state.value = NewsState.Error(result.message ?: "Unknown error")
+                            }
+                        }
                     }
                 } else {
-                    _state.value = NewsState.Error("No internet connection")
+                    withContext(Dispatchers.Main) {
+                        _state.value = NewsState.Error("No internet connection")
+                    }
                 }
             } catch (e: Exception) {
-                _state.value = NewsState.Error("Unexpected error: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    _state.value = NewsState.Error("Unexpected error: ${e.message}")
+                }
             }
         }
     }
 
 
+    private val _savedArticles = MutableStateFlow<List<Article>>(emptyList())
+    val savedArticles: StateFlow<List<Article>> = _savedArticles.asStateFlow()
     private fun fetchSavedArticles() {
         viewModelScope.launch {
             getFavoriteNewsUseCase().collect { articles ->
-                Log.d("NewsViewModel", "Fetching saved articles event received")
-                _state.value = NewsState.SavedArticlesState(articles)
-            // 🔥 Emit new state
+                Log.d("NewsViewModel", "Fetching saved articles event received: $articles")
+                withContext(Dispatchers.Main) {  // ✅ Ensure UI updates on the main thread
+                    _state.value = NewsState.SavedArticlesState(articles)
+                }
             }
         }
     }
+
 
 
     private fun checkIfArticleIsFavorite(url: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val isFavorite = isArticleExistsUseCase(url)
-            _state.value = NewsState.ArticleFavoriteState(isFavorite)
-        }
-    }
-
-
-    private fun fetchHeadlines(countryCode: String) {
-        viewModelScope.launch {
-            _state.value = NewsState.Loading
-            try {
-                if (internetConnection()) {
-                    val result = getHeadlinesUseCase(countryCode, headlinesPage)
-                   // headlinesPage++
-                    if (result is Resource.Success) {
-                        val articles = result.data?.articles ?: emptyList()
-                        apiTotalResults = result.data?.totalResults ?: 0
-                        headlinesResponse.addAll(articles)
-                        headlinesPage++
-
-
-                        _state.value = NewsState.Success(
-                            articles = headlinesResponse,
-                            totalResults = apiTotalResults,
-                            isLastPage = (headlinesPage * 20) >= apiTotalResults,
-                            isSearch = false
-
-
-                        )
-
-                    } else {
-                        _state.value = NewsState.Error(result.message ?: "Unknown error")
-                    }
-                } else {
-                    _state.value = NewsState.Error("No internet connection")
-                }
-            } catch (e: Exception) {
-                _state.value = NewsState.Error("Unexpected error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                _state.value = NewsState.ArticleFavoriteState(isFavorite)
             }
         }
     }
+
+
+
+    private fun fetchHeadlines(countryCode: String) {
+        _state.value = NewsState.Loading
+        viewModelScope.launch(Dispatchers.IO) { // Directly launch on IO thread
+            try {
+                if (networkHelper.hasInternetConnection()) {
+                    getHeadlinesUseCase(countryCode).collect { result ->  // Collecting Flow
+                        withContext(Dispatchers.Main) {  // Update UI state on Main thread
+                            if (result is Resource.Success) {
+                                val articles = result.data ?: emptyList()
+                                apiTotalResults = articles.size
+                                headlinesResponse.addAll(articles)
+
+                                _state.value = NewsState.Success(
+                                    articles = headlinesResponse,
+                                    totalResults = apiTotalResults,
+                                    isLastPage = (headlinesResponse.size >= apiTotalResults),
+                                    isSearch = false
+                                )
+                            } else {
+                                _state.value = NewsState.Error(result.message ?: "Unknown error")
+                            }
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _state.value = NewsState.Error("No internet connection")
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _state.value = NewsState.Error("Unexpected error: ${e.message}")
+                }
+            }
+        }
+    }
+
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -162,47 +167,48 @@ class NewsViewModel @Inject constructor(
             _searchQuery.value = query
         }
     }
+
+
     private fun searchNews(query: String) {
+
         Log.d("SearchNews", "Searching for: $query")
 
         if (query.isEmpty()) return
-        viewModelScope.launch {
-            if (query != oldSearchQuery || searchNewsResponse.isEmpty()) {
-                searchNewsPage = 1  // Reset page number for new query
-                searchNewsResponse.clear()  // Clear previous results
-                oldSearchQuery = query  // Update query tracker
-            }
 
-            _state.value = NewsState.Loading  // Show loading state
-            try {
-                if (internetConnection()) {
-                    val result = searchNewsUseCase(query, searchNewsPage)
-                    if (result is Resource.Success) {
-                        val articles = result.data?.articles ?: emptyList()
-                        apiTotalResults = result.data?.totalResults ?: 0
-
-                        searchNewsResponse.addAll(articles)
-                        searchNewsPage++  // Increase page number after successful response
-
-                        _state.value = NewsState.SearchResults(
-                            articles = searchNewsResponse,
-                            isLastPage = (searchNewsPage * Constants.QUERY_PAGE_SIZE) >= apiTotalResults
-                        )
+        viewModelScope.launch { // 🔥 Launching in IO thread to free Main thread
+            _state.value = NewsState.Loading
+            // Show loading state
+            withContext(Dispatchers.IO) {
+                try {
+                    if (networkHelper.hasInternetConnection()) {
+                        searchNewsUseCase(query, resetPagination = true).collect { result ->
+                            withContext(Dispatchers.Main) { // 🔥 Switch back to Main thread for UI updates
+                                if (result is Resource.Success) {
+                                    _state.value = NewsState.SearchResults(
+                                        articles = result.data ?: emptyList(),
+                                        isLastPage = result.isLastPage
+                                    )
+                                } else {
+                                    //_state.value =
+                                    //    NewsState.Error(result.message ?: "Unknown error")
+                                }
+                            }
+                        }
                     } else {
-                        _state.value = NewsState.Error(result.message ?: "Unknown error")
+                        _state.value = NewsState.Error("No internet connection")
                     }
-                } else {
-                    _state.value = NewsState.Error("No internet connection")
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) { // 🔥 Ensure error messages update UI on Main thread
+                        _state.value = NewsState.Error("Unexpected error: ${e.message}")
+                    }
                 }
-            } catch (e: Exception) {
-                _state.value = NewsState.Error("Unexpected error: ${e.message}")
             }
         }
     }
 
 
     private fun toggleFavorite(article: Article) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             article.url?.let { url ->
                 val isFavorite = isArticleExistsUseCase(url)
                 Log.d("RoomDB", "Checking if article exists: $isFavorite") // ✅ Debug log
@@ -237,22 +243,23 @@ class NewsViewModel @Inject constructor(
 //    }
 
     private fun deleteArticle(article: Article) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             deleteArticleUseCase(article)
         }
     }
-    fun getCurrentPage(): Int = headlinesPage
 
-    private fun internetConnection(): Boolean {
-        val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        return connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.run {
-            hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        } ?: false
-    }
+    fun getCurrentPage(): Int = headlinesPage
 }
+//    private fun internetConnection(): Boolean {
+//        val connectivityManager =
+//            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+//        return connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.run {
+//            hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+//                    hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+//                    hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+//        } ?: false
+//    }
+
 
 
 

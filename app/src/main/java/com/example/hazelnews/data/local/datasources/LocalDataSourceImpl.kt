@@ -2,8 +2,10 @@ package com.example.hazelnews.data.local.datasources
 
 import com.example.hazelnews.data.local.db.ArticleDAO
 import com.example.hazelnews.domain.models.Article
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class LocalDataSourceImpl @Inject constructor(
@@ -11,7 +13,9 @@ class LocalDataSourceImpl @Inject constructor(
 ) : LocalDataSource {
 
     override suspend fun saveArticle(article: Article): Long {
-        return articleDao.upsert(article)
+        return  withContext(Dispatchers.IO){
+        articleDao.upsert(article)
+            }
     }
 
     override fun getSavedArticles(): Flow<List<Article>> {
@@ -20,10 +24,14 @@ class LocalDataSourceImpl @Inject constructor(
     }
 
     override suspend fun deleteArticle(article: Article) {
-        articleDao.deleteArticle(article)
+        withContext(Dispatchers.IO) {
+            articleDao.deleteArticle(article)
+        }
     }
 
     override suspend fun isArticleExists(url: String): Boolean {
-        return articleDao.isArticleExists(url)
+        return withContext(Dispatchers.IO) {
+             articleDao.isArticleExists(url)
+        }
     }
 }

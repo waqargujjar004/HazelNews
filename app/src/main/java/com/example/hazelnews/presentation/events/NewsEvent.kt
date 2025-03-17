@@ -1,4 +1,4 @@
-package com.example.hazelnews.ui.events
+package com.example.hazelnews.presentation.events
 import com.example.hazelnews.domain.models.Article
 sealed class NewsEvent {
     data class FetchHeadlines(val countryCode: String) : NewsEvent()
