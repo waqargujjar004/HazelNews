@@ -4,17 +4,19 @@ plugins {
     id("com.google.devtools.ksp")
     id("androidx.navigation.safeargs.kotlin") // Safe Args Plugin (YouTube setup)
     id("kotlin-parcelize")
+//    id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+
 }
 
 android {
     namespace = "com.example.hazelnews"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.hazelnews"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -42,6 +44,7 @@ android {
     }
 }
 dependencies {
+
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
@@ -78,7 +81,11 @@ dependencies {
 
     //Hilt
     implementation ("com.google.dagger:hilt-android:2.50")
+    //kapt ("com.google.dagger:hilt-android-compiler:2.50")
     ksp ("com.google.dagger:hilt-compiler:2.50")
-
+    implementation(project(":core"))
 
 }
+//kapt {
+//    correctErrorTypes = true
+//}

@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "HazelNews"
 include(":app")
+include(":core")

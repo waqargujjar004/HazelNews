@@ -1,7 +1,7 @@
 package com.example.hazelnews.di
 
 import com.example.hazelnews.data.repository.NewsRepositoryImpl
-import com.example.hazelnews.domain.repository.NewsRepository
+import com.example.hazelnews.data.repository.NewsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

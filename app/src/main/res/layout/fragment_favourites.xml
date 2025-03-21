@@ -23,6 +23,7 @@
         android:visibility="gone"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:layout_marginTop="50dp"
         android:layout_centerInParent="true"/>
 
     <androidx.recyclerview.widget.RecyclerView
