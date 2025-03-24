@@ -1,13 +1,23 @@
 package com.example.hazelnews.ui.fragments
 
 
+import android.app.AlertDialog
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -21,6 +31,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.hazelmobile.cores.bases.fragment.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
+
 
 import kotlinx.coroutines.launch
 
@@ -54,29 +65,7 @@ class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBind
             article.url?.let { loadUrl(it) }
         }
 
-//        webView.apply {
-//            settings.javaScriptEnabled = true  // Enable JavaScript for modern websites
-//
-//            webViewClient = WebViewClient()  // Handles navigation inside the WebView
-//
-//            webChromeClient = object : WebChromeClient() {
-//                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-//                    if (newProgress < 50) {
-//                        webViewProgressBar.visibility = View.VISIBLE  // Show progress bar when loading
-//                    } else {
-//                        webViewProgressBar.visibility = View.GONE  // Hide progress bar when loading is complete
-//                    }
-//                }
-//            }
-//
-//            article.url?.let { loadUrl(it) }
-//        }
 
-//        // Load article in WebView
-//        webView.apply {
-//            webViewClient = WebViewClient()
-//            article.url?.let { loadUrl(it) }
-//        }
 
         // Dispatch event to check if the article is already a favorite
         article.url?.let { url ->
@@ -95,6 +84,7 @@ class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBind
                     is NewsState.Error -> {
                         Snackbar.make(root, state.message, Snackbar.LENGTH_SHORT).show()
                     }
+
                     else -> {}
                 }
             }
@@ -108,8 +98,13 @@ class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBind
                 isFavorite = true
                 updateFabIcon(isFavorite)
                 Snackbar.make(root, "Added to Favorites", Snackbar.LENGTH_SHORT).show()
+//
             } else {
-                Snackbar.make(root, "Already in Favorites", Snackbar.LENGTH_SHORT).show()
+
+                Snackbar.make(fab, "Already in Favorites", Snackbar.LENGTH_SHORT).show()
+
+
+
             }
         }
     }
@@ -120,13 +115,6 @@ class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBind
         )
     }
 }
-
-
-
-
-
-
-
 
 
 //class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBinding::inflate) {

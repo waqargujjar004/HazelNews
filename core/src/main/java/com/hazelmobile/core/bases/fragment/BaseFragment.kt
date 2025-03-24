@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.viewbinding.ViewBinding
+import com.google.android.material.snackbar.Snackbar
 import com.hazelmobile.cores.extensions.isInternetConnected
 
 abstract class BaseFragment<Binding : ViewBinding>(
@@ -79,6 +80,7 @@ abstract class BaseFragment<Binding : ViewBinding>(
 
             }
         }
+
     }
 
 }

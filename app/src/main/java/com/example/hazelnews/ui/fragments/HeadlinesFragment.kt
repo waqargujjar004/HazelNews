@@ -17,6 +17,7 @@ import com.example.hazelnews.ui.events.NewsEvent
 import com.example.hazelnews.ui.state.NewsState
 import com.example.hazelnews.ui.viewmodel.NewsViewModel
 import com.example.hazelnews.util.Constants
+import com.example.hazelnews.util.PaginationHandler
 import com.hazelmobile.cores.bases.fragment.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -29,7 +30,7 @@ class HeadlinesFragment : BaseFragment<FragmentHeadlinesBinding>(
     private val viewModel: NewsViewModel by viewModels()
     private lateinit var newsAdapter: NewsAdapter
     private var recyclerViewState: Parcelable? = null
-    private val paginationHelper = PaginationHelper()
+    private lateinit var paginationHandler: PaginationHandler
     private val stateHandler = NewsStateHandler()
 
     override fun onViewBindingCreated(savedInstanceState: Bundle?) {
@@ -50,6 +51,8 @@ class HeadlinesFragment : BaseFragment<FragmentHeadlinesBinding>(
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collectLatest { state ->
                     stateHandler.handleState(state, newsAdapter, binding, viewModel)
+                    val isLastPage = (state as? NewsState.Success)?.isLastPage ?: false
+                    paginationHandler.updateLastPageState(isLastPage)
                 }
             }
         }
@@ -66,7 +69,13 @@ class HeadlinesFragment : BaseFragment<FragmentHeadlinesBinding>(
         binding?.recyclerHeadlines?.apply {
             adapter = newsAdapter
             layoutManager = LinearLayoutManager(requireContext())
-            addOnScrollListener(paginationHelper.scrollListener(viewModel))
+            //addOnScrollListener(paginationHelper.scrollListener(viewModel))
+            paginationHandler = PaginationHandler(
+                recyclerView = this,
+                isLastPageProvider =false, // Provide isLastPage dynamically
+                onLoadMore = { viewModel.onEvent(NewsEvent.FetchHeadlines("us")) } // Trigger the correct event
+            )
+            paginationHandler.setupScrollListener()
         }
     }
 
@@ -140,40 +149,40 @@ class NewsStateHandler {
         binding?.itemHeadlinesError?.errorText?.text = message
     }
 }
-
-class PaginationHelper {
-    private var isLoading = false
-        private var isLastPage = false
-   private var isScrolling = false
-    fun scrollListener(viewModel: NewsViewModel): RecyclerView.OnScrollListener {
-        return object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-                val visibleItemCount = layoutManager.childCount
-                val totalItemCount = layoutManager.itemCount
-
-                val shouldPaginate =
-                    isLoading && isLastPage && firstVisibleItemPosition + visibleItemCount >= totalItemCount
-                            && firstVisibleItemPosition >= 0 && totalItemCount >= Constants.QUERY_PAGE_SIZE && isScrolling
-
-                if (shouldPaginate) {
-                    viewModel.onEvent(NewsEvent.FetchHeadlines("us"))
-                    isScrolling = false
-                }
-            }
-
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                    isScrolling = true
-                }
-            }
-        }
-    }
-}
-
+//
+//class PaginationHelper {
+//    private var isLoading = false
+//        private var isLastPage = false
+//   private var isScrolling = false
+//    fun scrollListener(viewModel: NewsViewModel): RecyclerView.OnScrollListener {
+//        return object : RecyclerView.OnScrollListener() {
+//            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//                super.onScrolled(recyclerView, dx, dy)
+//                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+//                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+//                val visibleItemCount = layoutManager.childCount
+//                val totalItemCount = layoutManager.itemCount
+//
+//                val shouldPaginate =
+//                    isLoading && isLastPage && firstVisibleItemPosition + visibleItemCount >= totalItemCount
+//                            && firstVisibleItemPosition >= 0 && totalItemCount >= Constants.QUERY_PAGE_SIZE && isScrolling
+//
+//                if (shouldPaginate) {
+//                    viewModel.onEvent(NewsEvent.FetchHeadlines("us"))
+//                    isScrolling = false
+//                }
+//            }
+//
+//            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+//                super.onScrollStateChanged(recyclerView, newState)
+//                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+//                    isScrolling = true
+//                }
+//            }
+//        }
+//    }
+//}
+//
 
 
 

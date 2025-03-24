@@ -12,6 +12,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.hazelnews.R
 import com.example.hazelnews.databinding.ActivityNewsBinding
 import com.example.hazelnews.ui.viewmodel.NewsViewModel
+import com.google.android.material.snackbar.Snackbar
 import com.hazelmobile.cores.bases.activity.BaseActivityWithVM
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,7 +25,7 @@ class NewsActivity : BaseActivityWithVM<NewsViewModel, ActivityNewsBinding>(
 
     override fun onViewBindingCreated(savedInstanceState: Bundle?) {
         super.onViewBindingCreated(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+//        WindowCompat.setDecorFitsSystemWindows(window, true)
         // Setup Bottom Navigation with Navigation Component
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.newsNavHostFragment) as NavHostFragment

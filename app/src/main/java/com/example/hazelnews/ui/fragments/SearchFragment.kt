@@ -27,6 +27,8 @@ import com.example.hazelnews.ui.events.NewsEvent
 import com.example.hazelnews.ui.fragments.SearchFragmentDirections.Companion.actionSearchFragment2ToArticleFragment
 import com.example.hazelnews.ui.state.NewsState
 import com.example.hazelnews.util.Constants
+import com.example.hazelnews.util.PaginationHandler
+import com.example.hazelnews.util.SearchQueryHandler
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
@@ -36,68 +38,10 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-
-// SearchQueryHandler.kt
-class SearchQueryHandler(
-    private val newsViewModel: NewsViewModel,
-    private val lifecycleScope: LifecycleCoroutineScope
-) {
-    private var searchJob: Job? = null
-
-    fun handleSearch(query: String?) {
-        query?.trim()?.let {
-            searchJob?.cancel()
-            searchJob = lifecycleScope.launch {
-                delay(500)  // Avoid multiple API calls
-                if (it.isNotEmpty()) {
-                    newsViewModel.onEvent(NewsEvent.SearchNews(it))
-                }
-            }
-        }
-    }
-}
-
-// PaginationHandler.kt
-class PaginationHandler(
-    private var newsViewModel: NewsViewModel,
-    private var recyclerView: RecyclerView,
-    private var isLastPage: Boolean,
-    private var isScrolling: Boolean
-) {
-    private val scrollListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            super.onScrolled(recyclerView, dx, dy)
-            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-            val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-            val visibleItemCount = layoutManager.childCount
-            val totalItemCount = layoutManager.itemCount
-
-            val shouldPaginate = !isLastPage && isScrolling &&
-                    firstVisibleItemPosition + visibleItemCount >= totalItemCount &&
-                    firstVisibleItemPosition >= 0 &&
-                    totalItemCount >= Constants.QUERY_PAGE_SIZE
-
-            if (shouldPaginate) {
-                newsViewModel.onEvent(NewsEvent.LoadMoreSearchResults)
-            }
-        }
-
-        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-            super.onScrollStateChanged(recyclerView, newState)
-            if (newState == RecyclerView.SCROLL_STATE_DRAGGING) isScrolling = true
-        }
-    }
-
-    fun setupScrollListener() {
-        recyclerView.addOnScrollListener(scrollListener)
-    }
-}
-
-// SearchFragment.kt
 @AndroidEntryPoint
 class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding::inflate) {
 
-    private val newsViewModel: NewsViewModel by viewModels() // Shared ViewModel
+    private val newsViewModel: NewsViewModel by viewModels()
     private lateinit var newsAdapter: NewsAdapter
     private lateinit var searchQueryHandler: SearchQueryHandler
     private lateinit var paginationHandler: PaginationHandler
@@ -109,8 +53,9 @@ class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding
         super.onViewBindingCreated(savedInstanceState)
         searchQueryHandler = SearchQueryHandler(newsViewModel, lifecycleScope)
         binding?.recyclerSearch?.let { recyclerView ->
-            paginationHandler = PaginationHandler(newsViewModel, recyclerView, isLastPage, isScrolling)
-        setupRecyclerView()
+            paginationHandler = PaginationHandler( recyclerView, isLastPageProvider = false,  onLoadMore = {  newsViewModel.onEvent(NewsEvent.LoadMoreSearchResults) } )
+
+            setupRecyclerView()
 
 
         }
@@ -156,6 +101,7 @@ class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding
                 hideProgressBar()
                 newsAdapter.submitList(state.articles)
                 isLastPage = state.isLastPage
+                paginationHandler.updateLastPageState(isLastPage)
                 adjustRecyclerPadding()
             }
             is NewsState.Loading -> {
@@ -215,7 +161,7 @@ class SearchFragment : BaseFragment<FragmentSearchBinding>(FragmentSearchBinding
     }
 
     private fun adjustRecyclerPadding() {
-        if (isLastPage) binding?.recyclerSearch?.setPadding(0, 0, 0, 0)
+        if (isLastPage) binding?.recyclerSearch?.setPadding(0, 0, 0, if (isLastPage) 0 else 50)
     }
 
     private fun hideKeyboard() {
