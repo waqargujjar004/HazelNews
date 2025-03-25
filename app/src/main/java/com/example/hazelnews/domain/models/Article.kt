@@ -1,10 +1,9 @@
 package com.example.hazelnews.domain.models
+
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.io.Serializable
 
 
 @Entity(
@@ -23,4 +22,18 @@ data class Article(
     val url: String?,
     val urlToImage: String?
 
-): Parcelable
+) : Parcelable {
+
+    fun isEqual(other: Article): Boolean {
+
+        return author == other.author &&
+                content == other.content &&
+                description == other.description &&
+                publishedAt == other.publishedAt &&
+                source == other.source &&
+                title == other.title &&
+                url == other.url &&
+                urlToImage == other.urlToImage
+    }
+
+}

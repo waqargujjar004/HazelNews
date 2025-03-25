@@ -9,6 +9,6 @@ class ArticleDiffCallback : BaseDiffUtils<Article>() {
     }
 
     override fun areContentsTheSame(oldItem: Article, newItem: Article): Boolean {
-        return oldItem == newItem  // Compare full object data
+        return oldItem.isEqual(newItem)  // Compare full object data
     }
 }

@@ -4,7 +4,6 @@ import com.example.hazelnews.data.local.db.ArticleDAO
 import com.example.hazelnews.domain.models.Article
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
