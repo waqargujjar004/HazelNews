@@ -146,7 +146,7 @@ class NewsViewModel @Inject constructor(
         }
     }
 
-    private val _savedArticles = MutableStateFlow<List<Article>>(emptyList())
+    //private val _savedArticles = MutableStateFlow<List<Article>>(emptyList())
     /*val savedArticles: StateFlow<List<Article>> = _savedArticles.asStateFlow()*/
 
 
@@ -156,7 +156,7 @@ class NewsViewModel @Inject constructor(
                 .stateIn(viewModelScope) // ✅ Ensures collection stops when ViewModel is cleared
                 .collectLatest { articles ->
                     Log.d("NewsViewModel", "Fetched articles: $articles") // ✅ Debugging
-                    _savedArticles.value = articles
+                  //  _savedArticles.value = articles
                     _state.value = NewsState.SavedArticlesState(articles)
                 }
         }

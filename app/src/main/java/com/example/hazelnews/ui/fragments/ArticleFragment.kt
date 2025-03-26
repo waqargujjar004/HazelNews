@@ -1,6 +1,8 @@
 package com.example.hazelnews.ui.fragments
 
+import android.os.Build
 import android.view.View
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.viewModels
@@ -33,7 +35,13 @@ class ArticleFragment : BaseFragment<FragmentArticleBinding>(FragmentArticleBind
 
         webView.apply {
             settings.javaScriptEnabled = true
-
+            webView.settings.javaScriptEnabled = true
+            webView.settings.domStorageEnabled = true
+            webView.settings.databaseEnabled = true
+            webView.settings.setSupportMultipleWindows(true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                webView.settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            }
             webViewClient = object : WebViewClient() {
                 override fun onPageCommitVisible(view: WebView?, url: String?) {
                     super.onPageCommitVisible(view, url)
